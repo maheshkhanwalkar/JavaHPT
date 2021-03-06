@@ -40,6 +40,15 @@ public class CustomSerDe
 
     /**
      * Serialize the object
+     *
+     * The class type of the object is used to select the custom SerDe, which
+     * performs the actual serialization operation.
+     *
+     * However, in order for the deserializer to determine what object was there
+     * originally, the registration number (see #register(...)) is appended before the
+     * rest of the object is written out. Hence, all the deserializer has to do is
+     * read the registration number to determine which custom SerDe to invoke.
+     *
      * @param obj object to serialize
      * @param buffer byte buffer to write to
      * @param <T> class type
@@ -51,6 +60,20 @@ public class CustomSerDe
         custom.get(type).serialize(obj, buffer);
     }
 
+    /**
+     * Deserialize the object
+     *
+     * The registration number is the first byte of the serialized output, so all
+     * that needs to be done is lookup the appropriate SerDe which is associated
+     * with the provided registration number.
+     *
+     * Once that is determined, simply call the SerDe will the rest of the buffer
+     * output, so it can reconstruct the object.
+     *
+     * @param buffer buffer to read from
+     * @param <T> class type
+     * @return the deserialized object
+     */
     public <T> T deserialize(ByteBuffer buffer)
     {
         byte type = buffer.get();
